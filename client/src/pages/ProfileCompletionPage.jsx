@@ -32,6 +32,7 @@ const ProfileCompletionPage = () => {
   };
 
   const skip = () => {
+    sessionStorage.setItem('skipProfileCompletion', 'true');
     navigate(user?.role === 'admin' ? '/admin' : '/volunteer');
   };
 

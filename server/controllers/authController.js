@@ -56,11 +56,22 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
+  const targetEmail = String(email || '').toLowerCase().trim();
 
-  const users = await listRows(TABLES.users, { filters: { email: String(email || '').toLowerCase() } });
+  console.log('[AUTH_DEBUG] Attempting login for:', targetEmail);
+
+  const users = await listRows(TABLES.users, { filters: { email: targetEmail } });
   const user = users[0];
 
-  if (!user || !(await bcrypt.compare(password || '', user.passwordHash || ''))) {
+  if (!user) {
+    console.log('[AUTH_DEBUG] User not found in DB:', targetEmail);
+    return res.status(401).json({ message: 'Invalid email or password' });
+  }
+
+  const isMatch = await bcrypt.compare(password || '', user.passwordHash || '');
+  console.log('[AUTH_DEBUG] Password match for', targetEmail, ':', isMatch);
+  
+  if (!isMatch) {
     return res.status(401).json({ message: 'Invalid email or password' });
   }
 

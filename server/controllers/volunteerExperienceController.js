@@ -1,13 +1,20 @@
 import { TABLES } from '../models/tableNames.js';
 import { getById, insertRow, listRows, updateRow } from '../services/dataService.js';
 
+const assignCoords = () => ({
+  lat: (12.9716 + (Math.random() - 0.5) * 5).toFixed(4),
+  lng: (77.5946 + (Math.random() - 0.5) * 5).toFixed(4)
+});
+
 const decodeRows = (rows) => {
     return rows.map(r => {
         const parts = (r.location || '').split('||');
         if (parts.length === 4) {
             return { ...r, location: parts[0], coordinates: { ownerId: parts[1], lat: parseFloat(parts[2]), lng: parseFloat(parts[3]) } };
         }
-        return { ...r, coordinates: { ownerId: null } };
+        // Fallback for legacy locations
+        const coords = assignCoords();
+        return { ...r, coordinates: { ownerId: 'none', lat: parseFloat(coords.lat), lng: parseFloat(coords.lng) } };
     });
 };
 

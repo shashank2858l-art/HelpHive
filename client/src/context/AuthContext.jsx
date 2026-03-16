@@ -68,6 +68,12 @@ export const AuthProvider = ({ children }) => {
     setUser(data.user);
   };
 
+  const updateProfile = async (payload) => {
+    const { data } = await api.put('/auth/update-profile', payload);
+    setUser(data.user);
+    return data.user;
+  };
+
   const logout = () => {
     localStorage.removeItem('ngo_token');
     setUser(null);
@@ -80,7 +86,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const value = useMemo(
-    () => ({ user, loading, login, loginWithGoogle, register, switchRole, logout }),
+    () => ({ user, loading, login, loginWithGoogle, register, updateProfile, switchRole, logout }),
     [user, loading]
   );
 

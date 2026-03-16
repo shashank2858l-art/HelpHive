@@ -249,19 +249,28 @@ const VolunteerDashboardPage = () => {
                     Volunteers needed: {Math.max(0, (event.volunteersRequired || 0) - (event.assignedVolunteers?.length || 0))}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => handleJoinEvent(event._id)}
-                    className="px-3 py-1.5 rounded-lg bg-cyan-500/10 text-cyan-200 text-sm font-medium hover:bg-cyan-500/20 transition"
+                    className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-300 text-xs font-medium hover:bg-emerald-500/20 transition"
                   >
-                    Join Event
+                    Join
                   </button>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${event.coordinates?.lat || 12.9716},${event.coordinates?.lng || 77.5946}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center p-1.5 rounded-lg border border-[var(--border-muted)] bg-[var(--card-elevated)] hover:bg-[var(--surface-soft)] transition"
+                    title="Open in Google Maps"
+                  >
+                    <MapPinned className="h-4 w-4 text-emerald-400" />
+                  </a>
                   <Link
                     to="/events"
-                    className="px-3 py-1.5 rounded-lg border border-[var(--border-muted)] text-sm"
+                    className="px-3 py-1.5 rounded-lg border border-[var(--border-muted)] text-xs"
                   >
-                    View Details
+                    Details
                   </Link>
                 </div>
               </div>
@@ -402,8 +411,17 @@ const VolunteerDashboardPage = () => {
           <div className="space-y-2">
             {joinedEvents.length ? (
               joinedEvents.slice(0, 4).map((event) => (
-                <div key={event._id} className="rounded-xl border border-[var(--border-muted)] bg-[var(--card-elevated)] px-3 py-2 text-sm">
-                  {event.title || event.name} | {event.location}
+                <div key={event._id} className="group rounded-xl border border-[var(--border-muted)] bg-[var(--card-elevated)] px-3 py-2 text-sm flex justify-between items-center transition-all hover:border-emerald-500/30">
+                  <span className="truncate">{event.title || event.name} | {event.location}</span>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${event.coordinates?.lat || 12.9716},${event.coordinates?.lng || 77.5946}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all ml-2"
+                    title="Open in Google Maps"
+                  >
+                    <Compass className="h-4 w-4" />
+                  </a>
                 </div>
               ))
             ) : (

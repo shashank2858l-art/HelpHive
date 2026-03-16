@@ -145,6 +145,17 @@ const MapTrackingPage = () => {
               <>
                 <p className="text-[var(--text-primary)]">{selectedPoint.name}</p>
                 <p className="text-[var(--text-secondary)]">{selectedPoint.label}</p>
+                <div className="mt-4">
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${selectedPoint.lat},${selectedPoint.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition-all hover:bg-emerald-500"
+                  >
+                    <Compass className="h-3.5 w-3.5" />
+                    Open in Google Maps
+                  </a>
+                </div>
               </>
             ) : (
               <p className="text-[var(--text-secondary)]">Click a map marker to see details.</p>

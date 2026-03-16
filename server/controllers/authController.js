@@ -14,11 +14,12 @@ const sanitizeUser = (user) => ({
   role: user.role,
   phone: user.phone || '',
   location: user.location || '',
+  pincode: user.pincode || '',
   skills: user.skills || [],
 });
 
 export const register = async (req, res) => {
-  const { fullName, email, password, role: requestedRole = 'volunteer', phone, location, skills = [] } = req.body;
+  const { fullName, email, password, role: requestedRole = 'volunteer', phone, location, pincode, skills = [] } = req.body;
 
   if (!fullName || !email || !password) {
     return res.status(400).json({ message: 'fullName, email and password are required' });
@@ -40,6 +41,7 @@ export const register = async (req, res) => {
     role: finalRole,
     phone,
     location,
+    pincode,
     skills,
   });
 
@@ -122,6 +124,7 @@ export const googleLogin = async (req, res) => {
         role: 'volunteer', // Always volunteer for new Google users
         phone: '',
         location: '',
+        pincode: '',
         skills: [],
       });
 
@@ -147,6 +150,22 @@ export const googleLogin = async (req, res) => {
     console.error('Google Auth Failed', error);
     return res.status(401).json({ message: 'Google authentication failed' });
   }
+};
+
+export const updateProfile = async (req, res) => {
+  const { location, pincode, phone, skills } = req.body;
+  const user = await updateRow(TABLES.users, req.user.id, {
+    location,
+    pincode,
+    phone,
+    skills,
+  });
+
+  if (user.role === 'volunteer') {
+    await upsertVolunteerProfile(user);
+  }
+
+  return res.json(sanitizeUser(user));
 };
 
 export const me = async (req, res) => {

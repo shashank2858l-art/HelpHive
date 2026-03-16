@@ -76,6 +76,7 @@ export const upsertVolunteerProfile = async (user) => {
       name: user.fullName || existing.name,
       email: user.email,
       role: user.role,
+      pincode: user.pincode || existing.pincode,
     });
   }
 
@@ -84,6 +85,7 @@ export const upsertVolunteerProfile = async (user) => {
     name: user.fullName,
     email: user.email,
     role: user.role,
+    pincode: user.pincode || '',
     status: 'approved',
     skills: user.skills || [],
     eventsJoined: 0,

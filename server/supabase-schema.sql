@@ -20,6 +20,7 @@ create table public.users (
   role text not null check (role in ('admin', 'volunteer')),
   phone text,
   location text,
+  pincode text,
   skills text[] default '{}',
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -36,6 +37,7 @@ create table public.volunteers (
   "hoursWorked" int default 0,
   "impactScore" int default 0,
   location text,
+  pincode text,
   coordinates jsonb,
   available boolean default true,
   created_at timestamptz default now(),

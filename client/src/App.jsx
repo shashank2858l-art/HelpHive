@@ -22,6 +22,7 @@ const EmergencyModePage = lazy(() => import('./pages/EmergencyModePage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const VolunteerDetailsPage = lazy(() => import('./pages/VolunteerDetailsPage'));
+const ProfileCompletionPage = lazy(() => import('./pages/ProfileCompletionPage'));
 
 const withSuspense = (Component) => (
   <Suspense fallback={<PageSkeleton />}>
@@ -35,6 +36,7 @@ const App = () => (
     <Route path="/login" element={<LoginPage />} />
     <Route path="/register" element={<RegisterPage />} />
     <Route path="/role-selection" element={<RoleSelectionPage />} />
+    <Route path="/complete-profile" element={withSuspense(ProfileCompletionPage)} />
     
     <Route element={<ProtectedRoute />}>
       <Route element={<AppLayout />}>

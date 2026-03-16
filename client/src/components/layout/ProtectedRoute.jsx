@@ -17,6 +17,11 @@ const ProtectedRoute = ({ allowedRoles }) => {
     return <Navigate to={user.role === 'admin' ? '/admin' : '/volunteer'} replace />;
   }
 
+  // Mandatory profile completion for volunteers
+  if (user.role === 'volunteer' && (!user.location || !user.pincode) && window.location.pathname !== '/complete-profile') {
+    return <Navigate to="/complete-profile" replace />;
+  }
+
   return <Outlet />;
 };
 

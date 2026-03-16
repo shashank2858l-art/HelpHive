@@ -20,7 +20,9 @@ const decodeRows = (rows) => {
         if (parts.length === 4) {
             return { ...r, location: parts[0], coordinates: { ownerId: parts[1], lat: parseFloat(parts[2]), lng: parseFloat(parts[3]) } };
         }
-        return { ...r, coordinates: { ownerId: null } };
+        // Fallback for legacy locations
+        const coords = assignCoords();
+        return { ...r, coordinates: { ownerId: 'none', lat: parseFloat(coords.lat), lng: parseFloat(coords.lng) } };
     });
 };
 

@@ -11,6 +11,7 @@ const RegisterPage = () => {
     password: '',
     phone: '',
     location: '',
+    pincode: '',
     skills: '',
     volunteerRole: '',
   });
@@ -39,6 +40,7 @@ const RegisterPage = () => {
         password: form.password,
         phone: form.phone,
         location: form.location,
+        pincode: form.pincode,
         skills: form.skills
           .split(',')
           .map((skill) => skill.trim())
@@ -73,6 +75,7 @@ const RegisterPage = () => {
             ['password', 'Password'],
             ['phone', 'Phone Number'],
             ['location', 'Location'],
+            ['pincode', 'Pincode'],
             ['skills', 'Skills'],
             ['volunteerRole', 'Volunteer Role'],
           ].map(([name, label]) => (

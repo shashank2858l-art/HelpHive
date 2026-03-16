@@ -8,3 +8,4 @@ authRouter.post('/register', register);
 authRouter.post('/login', login);
 authRouter.post('/google', googleLogin);
 authRouter.get('/me', protect, me);
+authRouter.put('/update-profile', protect, updateProfile);

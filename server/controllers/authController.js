@@ -153,21 +153,67 @@ export const googleLogin = async (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
-  const { location, pincode, phone, skills } = req.body;
+  const { location: locationName, pincode, phone, skills } = req.body;
+  
+  let finalLocation = locationName;
+  if (req.user.role === 'volunteer' && locationName) {
+      // Keep existing format if possible or create new one
+      const parts = (locationName || '').split('||');
+      if (parts.length !== 4) {
+          // It's a plain string, encode it
+          const lat = (12.9716 + (Math.random() - 0.5) * 5).toFixed(4);
+          const lng = (77.5946 + (Math.random() - 0.5) * 5).toFixed(4);
+          finalLocation = `${locationName}||${req.user.id}||${lat}||${lng}`;
+      }
+  }
+
   const user = await updateRow(TABLES.users, req.user.id, {
-    location,
+    location: finalLocation,
     pincode,
     phone,
     skills,
   });
-
+ 
   if (user.role === 'volunteer') {
     await upsertVolunteerProfile(user);
   }
-
+ 
   return res.json(sanitizeUser(user));
 };
-
+ 
+export const updateCoordinates = async (req, res) => {
+  const { lat, lng } = req.body;
+  
+  if (!lat || !lng) {
+      return res.status(400).json({ message: 'Latitude and Longitude are required' });
+  }
+ 
+  const user = await getById(TABLES.users, req.user.id);
+  if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+  }
+ 
+  // Update location string with new coordinates if it's a volunteer
+  if (user.role === 'volunteer') {
+      const locationName = (user.location || 'Unknown').split('||')[0];
+      const newLocation = `${locationName}||${user.id}||${lat}||${lng}`;
+      
+      await updateRow(TABLES.users, user.id, { location: newLocation });
+      await upsertVolunteerProfile({ ...user, location: newLocation });
+      
+      if (req.io) {
+          req.io.emit('system:event', { 
+              message: `Volunteer ${user.fullName} updated location`, 
+              eventName: 'location_updated', 
+              id: user.id,
+              coordinates: { lat, lng }
+          });
+      }
+  }
+ 
+  return res.json({ success: true, coordinates: { lat, lng } });
+};
+ 
 export const me = async (req, res) => {
   const user = await getById(TABLES.users, req.user.id);
   if (!user) {

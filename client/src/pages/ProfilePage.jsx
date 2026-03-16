@@ -16,7 +16,7 @@ import { api } from '../services/api';
 const ProfilePage = () => {
   const { user } = useAuth();
   const [profileVolunteer, setProfileVolunteer] = useState(null);
-  const [form, setForm] = useState({ name: '', location: '', skills: '' });
+  const [form, setForm] = useState({ name: '', location: '', pincode: '', skills: '' });
   const [timeline, setTimeline] = useState([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -31,6 +31,7 @@ const ProfilePage = () => {
         setForm({
           name: profile?.name || '',
           location: profile?.location || '',
+          pincode: profile?.pincode || '',
           skills: Array.isArray(profile?.skills) ? profile.skills.join(', ') : '',
         });
         const series = (activityRes.data || []).slice(0, 8).reverse().map((item, index) => ({
@@ -50,6 +51,7 @@ const ProfilePage = () => {
       .put(`/volunteers/${user._id}`, {
         name: form.name.trim(),
         location: form.location.trim(),
+        pincode: form.pincode.trim(),
         skills: form.skills
           .split(',')
           .map((skill) => skill.trim())
@@ -89,7 +91,7 @@ const ProfilePage = () => {
           <p className="text-sm text-[var(--text-secondary)]">Role: {profileVolunteer?.role || user?.role || 'volunteer'}</p>
           <p className="text-sm text-[var(--text-secondary)]">Status: {profileVolunteer?.status || 'pending'}</p>
           <p className="text-sm text-[var(--text-secondary)]">Duty: {profileVolunteer?.dutyStatus || 'off-duty'}</p>
-          <p className="text-sm text-[var(--text-secondary)]">Location: {profileVolunteer?.location || 'N/A'}</p>
+          <p className="text-sm text-[var(--text-secondary)]">Location: {profileVolunteer?.location || 'N/A'} ({profileVolunteer?.pincode || 'No Pincode'})</p>
           <p className="text-sm text-[var(--text-secondary)]">Skills: {(profileVolunteer?.skills || []).join(', ') || 'N/A'}</p>
           <p className="text-sm text-[var(--text-secondary)]">Volunteer hours: {profileVolunteer?.hoursContributed || 0}</p>
           <p className="text-sm text-[var(--text-secondary)]">Events participated: {profileVolunteer?.eventsJoined || 0}</p>
@@ -106,6 +108,12 @@ const ProfilePage = () => {
               onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
               className="w-full rounded-xl border border-[var(--border-muted)] bg-[var(--card-elevated)] px-3 py-2 text-sm outline-none"
               placeholder="Location"
+            />
+            <input
+              value={form.pincode}
+              onChange={(e) => setForm((prev) => ({ ...prev, pincode: e.target.value }))}
+              className="w-full rounded-xl border border-[var(--border-muted)] bg-[var(--card-elevated)] px-3 py-2 text-sm outline-none"
+              placeholder="Pincode"
             />
             <textarea
               value={form.skills}

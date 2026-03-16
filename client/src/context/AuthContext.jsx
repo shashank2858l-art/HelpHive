@@ -41,6 +41,34 @@ export const AuthProvider = ({ children }) => {
       .finally(() => setLoading(false));
   }, []);
 
+  // Live Location Tracking for Volunteers
+  useEffect(() => {
+    if (!user || user.role !== 'volunteer') return;
+
+    const updateLiveLocation = () => {
+      if (!navigator.geolocation) return;
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          api.put('/auth/coordinates', { lat: latitude, lng: longitude })
+            .catch(err => console.warn('Failed to update live location:', err.message));
+        },
+        (error) => {
+          console.warn('Geolocation error:', error.message);
+        },
+        { enableHighAccuracy: true }
+      );
+    };
+
+    // Initial update
+    updateLiveLocation();
+
+    // Periodic update every 2 minutes
+    const interval = setInterval(updateLiveLocation, 120000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
     localStorage.setItem('ngo_token', data.token);

@@ -62,21 +62,8 @@ const RegisterPage = () => {
         <h1 className="mb-2 font-['Sora'] text-2xl font-bold">Create HelpHive Account</h1>
         <p className="mb-5 text-sm text-[var(--text-secondary)]">Register as admin or volunteer and continue to your role dashboard.</p>
 
-        <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--card-elevated)] p-1">
-          <button
-            type="button"
-            onClick={() => setRole('volunteer')}
-            className={`rounded-lg px-3 py-2 text-sm font-semibold ${role === 'volunteer' ? 'bg-emerald-600 text-white' : 'text-[var(--text-secondary)]'}`}
-          >
-            Volunteer
-          </button>
-          <button
-            type="button"
-            onClick={() => setRole('admin')}
-            className={`rounded-lg px-3 py-2 text-sm font-semibold ${role === 'admin' ? 'bg-blue-600 text-white' : 'text-[var(--text-secondary)]'}`}
-          >
-            Admin
-          </button>
+        <div className="mb-4 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+          <p className="text-emerald-400 text-sm font-medium">Registering as Volunteer</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

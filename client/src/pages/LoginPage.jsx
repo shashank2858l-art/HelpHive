@@ -23,6 +23,10 @@ const LoginPage = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    setError('');
+  }, [role]);
+
+  useEffect(() => {
     if (!user?.role) return;
     navigate('/role-selection', { replace: true });
   }, [user, navigate]);

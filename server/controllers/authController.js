@@ -18,11 +18,14 @@ const sanitizeUser = (user) => ({
 });
 
 export const register = async (req, res) => {
-  const { fullName, email, password, role = 'volunteer', phone, location, skills = [] } = req.body;
+  const { fullName, email, password, role: requestedRole = 'volunteer', phone, location, skills = [] } = req.body;
 
   if (!fullName || !email || !password) {
     return res.status(400).json({ message: 'fullName, email and password are required' });
   }
+
+  // Only the specific admin email can have the admin role
+  const finalRole = String(email).toLowerCase() === 'admin@helphive.org' ? 'admin' : 'volunteer';
 
   const users = await listRows(TABLES.users, { filters: { email: String(email).toLowerCase() } });
   if (users.length) {
@@ -34,17 +37,16 @@ export const register = async (req, res) => {
     fullName,
     email: String(email).toLowerCase(),
     passwordHash,
-    role,
+    role: finalRole,
     phone,
     location,
     skills,
   });
 
-  if (role === 'volunteer') {
+  if (finalRole === 'volunteer') {
     try {
       await upsertVolunteerProfile(user);
     } catch (error) {
-      // Keep auth functional even when volunteer profile schema is not initialized yet.
       console.warn('Volunteer profile sync skipped:', error.message);
     }
   }
@@ -69,25 +71,29 @@ import { verifyGoogleToken } from '../services/firebaseAuth.js';
 import { randomBytes } from 'crypto';
 
 export const googleLogin = async (req, res) => {
-  const { token, role = 'volunteer' } = req.body;
+  const { token, role: requestedRole = 'volunteer' } = req.body;
 
   if (!token) {
     return res.status(400).json({ message: 'Google token is required' });
   }
 
   try {
-    // 1. Verify token with Firebase Admin
     const decodedToken = await verifyGoogleToken(token);
     const email = decodedToken.email.toLowerCase();
     const fullName = decodedToken.name || 'Google User';
 
-    // 2. Check if user already exists in Supabase
+    // Only allow admin@helphive.org to be Admin
+    const isTargetAdmin = email === 'admin@helphive.org';
+
+    // Block Google Auth ONLY for the actual Admin account
+    if (isTargetAdmin) {
+       return res.status(401).json({ message: 'Admin account must use Email/Password login.' });
+    }
+
     let users = await listRows(TABLES.users, { filters: { email } });
     let user = users[0];
 
-    // 3. If they don't exist, register them automatically
     if (!user) {
-      // Generate a random placeholder password since they use Google Auth
       const randomPassword = randomBytes(16).toString('hex');
       const passwordHash = await bcrypt.hash(randomPassword, 10);
 
@@ -95,40 +101,29 @@ export const googleLogin = async (req, res) => {
         fullName,
         email,
         passwordHash,
-        role: role, // Requested role (admin or volunteer)
+        role: 'volunteer', // Always volunteer for new Google users
         phone: '',
         location: '',
         skills: [],
       });
 
-      // Also create their profile
-      if (role === 'volunteer') {
-        try {
-          await upsertVolunteerProfile(user);
-        } catch (error) {
-          console.warn('Volunteer profile sync skipped:', error.message);
-        }
+      try {
+        await upsertVolunteerProfile(user);
+      } catch (error) {
+        console.warn('Volunteer profile sync skipped:', error.message);
       }
-    } else if (user.role !== role) {
-      // 3.1 Block Google Auth if trying to switch to/from Admin
-      if (role === 'admin' || user.role === 'admin') {
-         return res.status(401).json({ message: 'Admin accounts must use Email/Password login.' });
-      }
-
-      // 3.2 If they exist but requested a different role (e.g. switching from Volunteer to Admin)
-      console.log(`Updating user role from ${user.role} to ${role}`);
-      user = await updateRow(TABLES.users, user.id, { role });
-      
-      if (role === 'volunteer') {
-          try {
-            await upsertVolunteerProfile(user);
-          } catch (error) {
-            console.warn('Volunteer profile sync skipped:', error.message);
-          }
+    } else {
+      // If user exists, ensure they are treated as volunteer (unless they are already admin, but we blocked admin above)
+      if (user.role !== 'volunteer') {
+         user = await updateRow(TABLES.users, user.id, { role: 'volunteer' });
+         try {
+           await upsertVolunteerProfile(user);
+         } catch (error) {
+           console.warn('Volunteer profile sync skipped:', error.message);
+         }
       }
     }
 
-    // 4. Return standard JWT session token
     return res.json({ token: signToken(user.id), user: sanitizeUser(user) });
   } catch (error) {
     console.error('Google Auth Failed', error);

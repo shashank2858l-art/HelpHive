@@ -1,9 +1,12 @@
 import axios from 'axios';
 
 const getApiBase = () => {
-  let url = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').trim();
-  // Ensure it doesn't have a space at the start (already handled by .trim(), but for clarity)
-  // Ensure it ends with /api
+  let url = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/^\s+|\s+$/g, '');
+  
+  // Extra safety: strip everything before the first 'http' in case of weird invisible prefix
+  const httpIdx = url.indexOf('http');
+  if (httpIdx > 0) url = url.substring(httpIdx);
+
   if (!url.endsWith('/api') && !url.endsWith('/api/')) {
     url = url.replace(/\/+$/, '') + '/api';
   }

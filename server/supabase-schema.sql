@@ -154,9 +154,9 @@ NOTIFY pgrst, 'reload schema';
 -- SEED DATA DIRECTLY (FOOLPROOF)
 INSERT INTO public.users (id, "fullName", email, "passwordHash", role)
 VALUES 
-('123e4567-e89b-12d3-a456-426614174000', 'System Admin', 'admin@helphive.org', '$2a$10$Hmg./IuxeM3LrZ2lTXN2/e35CtbKYOdxngnwzdAM1eFnyOc2xcY3', 'admin'),
-('123e4567-e89b-12d3-a456-426614174001', 'Aisha Sharma', 'aisha.demo@helphive.org', '$2a$10$Hmg./IuxeM3LrZ2lTXN2/e35CtbKYOdxngnwzdAM1eFnyOc2xcY3', 'volunteer'),
-('123e4567-e89b-12d3-a456-426614174002', 'Rahul Verma', 'rahul.demo@helphive.org', '$2a$10$Hmg./IuxeM3LrZ2lTXN2/e35CtbKYOdxngnwzdAM1eFnyOc2xcY3', 'volunteer')
+('123e4567-e89b-12d3-a456-426614174000', 'System Admin', 'admin@helphive.org', '$2a$10$U7xHQKI/lL0x3jCFS2bMe.4CqPqzAnqf07CAPmGZ/N5bvwIRV4I4', 'admin'),
+('123e4567-e89b-12d3-a456-426614174001', 'Aisha Sharma', 'aisha.demo@helphive.org', '$2a$10$U7xHQKI/lL0x3jCFS2bMe.4CqPqzAnqf07CAPmGZ/N5bvwIRV4I4', 'volunteer'),
+('123e4567-e89b-12d3-a456-426614174002', 'Rahul Verma', 'rahul.demo@helphive.org', '$2a$10$U7xHQKI/lL0x3jCFS2bMe.4CqPqzAnqf07CAPmGZ/N5bvwIRV4I4', 'volunteer')
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO public.volunteers (id, name, email, role, "impactScore", "eventsJoined", "hoursWorked", location)

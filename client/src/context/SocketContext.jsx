@@ -68,10 +68,17 @@ const formatEventMessage = (eventName, payload) => {
 };
 
 const getSocketUrl = () => {
-  const explicit = import.meta.env.VITE_SOCKET_URL?.trim();
-  if (explicit) return explicit;
+  let explicit = (import.meta.env.VITE_SOCKET_URL || '').replace(/^\s+|\s+$/g, '');
+  if (explicit) {
+    const httpIdx = explicit.indexOf('http');
+    if (httpIdx > 0) explicit = explicit.substring(httpIdx);
+    return explicit;
+  }
 
-  const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').trim();
+  let apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/^\s+|\s+$/g, '');
+  const httpIdx = apiBase.indexOf('http');
+  if (httpIdx > 0) apiBase = apiBase.substring(httpIdx);
+
   return apiBase.replace(/\/api\/?$/, '');
 };
 

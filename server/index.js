@@ -43,6 +43,10 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/', (_req, res) => {
+  res.send('<h1>HelpHive API is Live</h1><p>Visit <code>/api/health</code> for status.</p>');
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'HelpHive API' });
 });

@@ -189,6 +189,14 @@ const DashboardPage = () => {
     if (!liveEvents.length) return;
 
     const incoming = liveEvents[0];
+
+    // Auto-refresh Dashboard charts upon CSV Resource/Volunteer uploads
+    if (['resource_added', 'volunteer_added'].includes(incoming.eventName)) {
+      api.get('/dashboard/overview').then((res) => {
+        if (res.data) setOverview(prev => ({ ...prev, ...res.data }));
+      }).catch(console.error);
+    }
+
     setFeed((prev) => {
       if (prev[0]?.id === incoming.id) return prev;
 

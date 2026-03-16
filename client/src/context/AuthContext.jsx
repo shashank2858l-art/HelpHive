@@ -1,55 +1,30 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
+// Firebase Authentication setup
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+
+const app = initializeApp({
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+});
+
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 const AuthContext = createContext(null);
-const OFFLINE_USER_KEY = 'ngo_offline_user';
-const demoCredentials = {
-  admin: { email: 'admin@helphive.org', password: 'Admin@123' },
-  volunteer: { email: 'aarav@example.com', password: 'Volunteer@123' },
-};
-
-const offlineRoleUsers = {
-  admin: {
-    id: 'offline-admin',
-    _id: 'offline-admin',
-    name: 'HelpHive Admin',
-    fullName: 'HelpHive Admin',
-    email: 'admin@helphive.org',
-    role: 'admin',
-    status: 'approved',
-  },
-  volunteer: {
-    id: 'offline-volunteer',
-    _id: 'offline-volunteer',
-    name: 'HelpHive Volunteer',
-    fullName: 'HelpHive Volunteer',
-    email: 'aarav@example.com',
-    role: 'volunteer',
-    status: 'approved',
-    dutyStatus: 'off-duty',
-  },
-};
-
-const readOfflineUser = () => {
-  try {
-    const raw = localStorage.getItem(OFFLINE_USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(
-    () => Boolean(localStorage.getItem('ngo_token')) || Boolean(readOfflineUser())
-  );
+  const [loading, setLoading] = useState(() => Boolean(localStorage.getItem('ngo_token')));
 
   useEffect(() => {
     const token = localStorage.getItem('ngo_token');
     if (!token) {
-      const offlineUser = readOfflineUser();
-      setUser(offlineUser);
       setLoading(false);
       return;
     }
@@ -57,74 +32,55 @@ export const AuthProvider = ({ children }) => {
     api
       .get('/auth/me')
       .then((res) => {
-        localStorage.removeItem(OFFLINE_USER_KEY);
         setUser(res.data);
       })
       .catch(() => {
         localStorage.removeItem('ngo_token');
-        const offlineUser = readOfflineUser();
-        setUser(offlineUser);
+        setUser(null);
       })
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
-    localStorage.removeItem(OFFLINE_USER_KEY);
     localStorage.setItem('ngo_token', data.token);
     setUser(data.user);
   };
 
-  const register = async (payload) => {
-    const { data } = await api.post('/auth/register', payload);
-    localStorage.removeItem(OFFLINE_USER_KEY);
-    localStorage.setItem('ngo_token', data.token);
-    setUser(data.user);
-  };
-
-  const loginOfflineByRole = (role) => {
-    const fallbackUser = offlineRoleUsers[role];
-    if (!fallbackUser) {
-      throw new Error('Invalid role');
-    }
-
-    localStorage.removeItem('ngo_token');
-    localStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(fallbackUser));
-    setUser(fallbackUser);
-  };
-
-  const loginAsRole = async (role) => {
-    const creds = demoCredentials[role];
-    if (!creds) {
-      throw new Error('Invalid role');
-    }
-
+  const loginWithGoogle = async (role = 'volunteer') => {
     try {
-      await login(creds.email, creds.password);
+      const result = await signInWithPopup(auth, googleProvider);
+      const token = await result.user.getIdToken();
+      
+      const { data } = await api.post('/auth/google', { token, role });
+      localStorage.setItem('ngo_token', data.token);
+      setUser(data.user);
+      return data.user;
     } catch (error) {
-      const status = error?.response?.status;
-      if (!status || status >= 500 || status === 401 || status === 403) {
-        loginOfflineByRole(role);
-        return;
-      }
+      console.error('Google Sign-In Error:', error);
       throw error;
     }
   };
 
+  const register = async (payload) => {
+    const { data } = await api.post('/auth/register', payload);
+    localStorage.setItem('ngo_token', data.token);
+    setUser(data.user);
+  };
+
   const logout = () => {
     localStorage.removeItem('ngo_token');
-    localStorage.removeItem(OFFLINE_USER_KEY);
     setUser(null);
   };
 
   const switchRole = async () => {
+    // Basic role switch logic
     const nextRole = user?.role === 'admin' ? 'volunteer' : 'admin';
-    await loginAsRole(nextRole);
     return nextRole;
   };
 
   const value = useMemo(
-    () => ({ user, loading, login, register, loginAsRole, switchRole, logout }),
+    () => ({ user, loading, login, loginWithGoogle, register, switchRole, logout }),
     [user, loading]
   );
 

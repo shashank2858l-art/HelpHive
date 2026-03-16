@@ -1,0 +1,10 @@
+resourceName,quantity,location,status,category
+First Aid Kits,500,Central Warehouse,available,Medical
+Blankets,1200,Chennai Hub,available,Bedding
+Drinking Water,5000,Mumbai Port,available,Food & Water
+Flashlights,300,Delhi Relief Center,low,Tools
+Canned Food,800,Bangalore Storage,critical,Food & Water
+Tents,150,Kolkata Hub,available,Shelter
+Portable Generators,20,Chennai Hub,low,Equipment
+Sanitizers,1000,Central Warehouse,available,Hygiene
+

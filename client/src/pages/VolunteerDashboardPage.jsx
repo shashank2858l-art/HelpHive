@@ -22,7 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
 const VolunteerDashboardPage = () => {
-  const { user, switchRole } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [nearbyEvents, setNearbyEvents] = useState([]);
@@ -160,15 +160,6 @@ const VolunteerDashboardPage = () => {
       .catch((err) => setError(err.response?.data?.message || 'Unable to join event.'));
   };
 
-  const handleSwitchRole = async () => {
-    try {
-      const nextRole = await switchRole();
-      navigate(nextRole === 'admin' ? '/dashboard' : '/volunteer-dashboard', { replace: true });
-    } catch (err) {
-      setError(err?.response?.data?.message || 'Unable to switch role.');
-    }
-  };
-
   if (loading) {
     return (
       <section className="space-y-4 pb-8">
@@ -197,13 +188,6 @@ const VolunteerDashboardPage = () => {
           subtitle="Your Impact and Activities"
           action={
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleSwitchRole}
-                className="rounded-xl border border-[var(--border-muted)] bg-[var(--card-elevated)] px-3 py-1.5 text-xs font-semibold"
-              >
-                Switch Role
-              </button>
               <button
                 type="button"
                 className="rounded-xl border border-[var(--border-muted)] bg-[var(--card-elevated)] p-2"

@@ -1,0 +1,5 @@
+resources -> id, name, category, quantity, unit, location, status, lastUpdated, createdAt
+volunteers -> id, name, email, role, status, skills, location, eventsJoined, hoursWorked, impactScore, created_at, updated_at
+events -> id, title, description, location, date, status, volunteersNeeded, volunteersRegistered, category, urgency, createdAt
+users -> id, fullName, email, passwordHash, role, phone, location, skills, created_at, updated_at
+disasters -> id, title, type, severity, location, status, description, reportedAt, createdAt

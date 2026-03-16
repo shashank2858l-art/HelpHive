@@ -1,13 +1,28 @@
 import { TABLES } from '../models/tableNames.js';
 import { getById, insertRow, listRows, updateRow } from '../services/dataService.js';
 
+const decodeRows = (rows) => {
+    return rows.map(r => {
+        const parts = (r.location || '').split('||');
+        if (parts.length === 4) {
+            return { ...r, location: parts[0], coordinates: { ownerId: parts[1], lat: parseFloat(parts[2]), lng: parseFloat(parts[3]) } };
+        }
+        return { ...r, coordinates: { ownerId: null } };
+    });
+};
+
 export const getActivity = async (_req, res) => {
   const activity = await listRows(TABLES.volunteerActivity);
   return res.json(activity);
 };
 
 export const getHelpRequests = async (req, res) => {
-  const requests = await listRows(TABLES.helpRequests);
+  let requests = await listRows(TABLES.helpRequests);
+  requests = decodeRows(requests);
+  
+  const isGlobalAdmin = req.user?.role === 'admin' && !req.user?.id;
+  requests = requests.filter(r => isGlobalAdmin || !r.coordinates?.ownerId || r.coordinates.ownerId === req.user?.id);
+
   const { status } = req.query;
   if (!status) {
     return res.json(requests);
@@ -40,13 +55,27 @@ export const getNotifications = async (req, res) => {
   return res.json(filtered);
 };
 
-export const getMapData = async (_req, res) => {
-  const [events, volunteers, resources, helpRequests] = await Promise.all([
+export const getMapData = async (req, res) => {
+  let [events, volunteers, resources, helpRequests] = await Promise.all([
     listRows(TABLES.events),
     listRows(TABLES.volunteers),
     listRows(TABLES.resources),
     listRows(TABLES.helpRequests),
   ]);
+
+  events = decodeRows(events);
+  volunteers = decodeRows(volunteers);
+  resources = decodeRows(resources);
+  helpRequests = decodeRows(helpRequests);
+
+  const uid = req.user?.id;
+  const isGlobalAdmin = req.user?.role === 'admin' && !uid;
+  if (!isGlobalAdmin) {
+    events = events.filter(x => !x.coordinates?.ownerId || x.coordinates.ownerId === uid);
+    volunteers = volunteers.filter(x => !x.coordinates?.ownerId || x.coordinates.ownerId === uid);
+    resources = resources.filter(x => !x.coordinates?.ownerId || x.coordinates.ownerId === uid);
+    helpRequests = helpRequests.filter(x => !x.coordinates?.ownerId || x.coordinates.ownerId === uid);
+  }
 
   return res.json({
     events,

@@ -1,25 +1,24 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import AnimatedButton from '../components/ui/AnimatedButton';
 import { useAuth } from '../context/AuthContext';
 
 const RoleSelectionPage = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
-  const onContinue = (role) => {
+  // If user is already logged in, immediately redirect them to their strict role dashboard
+  useEffect(() => {
+    if (user) {
+      navigate(user.role === 'admin' ? '/admin' : '/volunteer', { replace: true });
+    }
+  }, [user, navigate]);
+
+  const onContinue = (selectedRole) => {
     if (!user) {
-      navigate(`/login?role=${role}`);
-      return;
+      navigate(`/login?role=${selectedRole}`);
     }
-
-    if (user.role !== role) {
-      logout();
-      navigate(`/login?role=${role}`);
-      return;
-    }
-
-    navigate(role === 'admin' ? '/admin' : '/volunteer');
   };
 
   return (

@@ -2,6 +2,8 @@ import 'dotenv/config';
 import 'express-async-errors';
 import cors from 'cors';
 import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import { aiRouter } from './routes/aiRoutes.js';
 import { volunteerInsights } from './controllers/aiController.js';
 import { analyticsRouter } from './routes/analyticsRoutes.js';
@@ -16,7 +18,16 @@ import { protect } from './middleware/authMiddleware.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 
 const app = express();
+const httpServer = createServer(app);
 const port = Number(process.env.PORT || 5000);
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CLIENT_URL?.split(',') || '*',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
 
 app.use(
   cors({
@@ -25,6 +36,12 @@ app.use(
   })
 );
 app.use(express.json());
+
+// Socket.io middleware MUST be before routes to be accessible in controllers
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'HelpHive API' });
@@ -44,6 +61,11 @@ app.post('/api/ai-insights', protect, volunteerInsights);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`HelpHive API running on port ${port}`);
+io.on('connection', (socket) => {
+  // Simple welcome event to avoid frontend errors
+  socket.emit('system:welcome', { message: 'Connected to HelpHive realtime channel' });
+});
+
+httpServer.listen(port, () => {
+  console.log(`HelpHive API & WebSockets running on port ${port}`);
 });

@@ -1,0 +1,6 @@
+name,email,role,status,skills,location
+Sarah Connor,sarah.c@demo.com,volunteer,approved,"Medical, CPR, Logistics",Downtown Shelter
+John Smith,jsmith@example.com,volunteer,pending,"Heavy Lifting, Driving",Westside Hub
+Emma Davis,emma.davis@demo.com,volunteer,approved,"Counseling, Organization",Community Center
+Marcus Johnson,mjohnson@demo.com,volunteer,approved,"IT, Logistics, Communication",City Hall
+Priya Patel,priya.p@test.com,volunteer,pending,"Medical, First Aid",Southside Clinic

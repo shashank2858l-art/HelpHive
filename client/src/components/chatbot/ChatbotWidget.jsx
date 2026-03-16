@@ -46,7 +46,7 @@ const ChatbotWidget = () => {
 
     try {
       const { data } = await api.post('/ai/chatbot', { message: input.trim() });
-      const aiMsg = { role: 'assistant', content: data.answer || 'No response generated.' };
+      const aiMsg = { role: 'assistant', content: data.reply || data.answer || 'No response generated.' };
       setMessages((prev) => [...prev, aiMsg]);
     } catch (err) {
       const aiMsg = {

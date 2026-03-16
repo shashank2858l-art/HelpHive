@@ -15,8 +15,9 @@ import {
   Settings,
   Users,
   X,
+  LogOut,
 } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const adminLinks = [
@@ -45,18 +46,18 @@ const sidebarVariants = {
 };
 
 const SidebarContent = ({ collapsed, onToggleCollapse, onNavigate }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const links = user?.role === 'admin' ? adminLinks : volunteerLinks;
 
   return (
     <>
       <div className="mb-6 flex items-center justify-between px-2">
-        <div className="flex items-center gap-2 overflow-hidden">
+        <Link to="/" onClick={onNavigate} className="flex items-center gap-2 overflow-hidden hover:opacity-80 transition-opacity">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-sm font-bold text-slate-900 shadow-lg shadow-amber-500/30">
             <Hexagon className="h-4 w-4" />
           </div>
           {!collapsed && <p className="font-['Sora'] text-lg font-semibold tracking-tight">HelpHive</p>}
-        </div>
+        </Link>
 
         <button
           type="button"
@@ -68,7 +69,7 @@ const SidebarContent = ({ collapsed, onToggleCollapse, onNavigate }) => {
         </button>
       </div>
 
-      <nav className="space-y-1.5">
+      <nav className="space-y-1.5 flex-1">
         {links.map((item) => (
           <NavLink
             key={item.to}
@@ -88,15 +89,28 @@ const SidebarContent = ({ collapsed, onToggleCollapse, onNavigate }) => {
         ))}
       </nav>
 
-      <div className="mt-auto rounded-2xl border border-[var(--border-muted)] bg-[var(--card-elevated)] p-3 text-xs text-[var(--text-secondary)]">
-        {!collapsed ? (
-          <>
-            <p className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Mission Pulse</p>
-            <p>27 active drives coordinated this week.</p>
-          </>
-        ) : (
-          <Menu className="mx-auto h-4 w-4" />
-        )}
+      <div className="mt-8 space-y-3">
+        <button
+          onClick={() => {
+            logout();
+            if (onNavigate) onNavigate();
+          }}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-400 opacity-80 transition hover:bg-rose-500/10 hover:opacity-100"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>Logout</span>}
+        </button>
+
+        <div className="rounded-2xl border border-[var(--border-muted)] bg-[var(--card-elevated)] p-3 text-xs text-[var(--text-secondary)]">
+          {!collapsed ? (
+            <>
+              <p className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Mission Pulse</p>
+              <p>27 active drives coordinated this week.</p>
+            </>
+          ) : (
+            <Menu className="mx-auto h-4 w-4" />
+          )}
+        </div>
       </div>
     </>
   );

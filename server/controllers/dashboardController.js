@@ -6,13 +6,37 @@ const monthName = (dateValue) =>
     month: 'short',
   });
 
-export const getOverview = async (_req, res) => {
-  const [volunteers, events, resources, activities] = await Promise.all([
+const decodeRows = (rows) => {
+    return rows.map(r => {
+        const parts = (r.location || '').split('||');
+        if (parts.length === 4) {
+            return { ...r, location: parts[0], coordinates: { ownerId: parts[1], lat: parseFloat(parts[2]), lng: parseFloat(parts[3]) } };
+        }
+        return { ...r, coordinates: { ownerId: null } };
+    });
+};
+
+export const getOverview = async (req, res) => {
+
+  let [volunteers, events, resources, activities] = await Promise.all([
     listRows(TABLES.volunteers),
     listRows(TABLES.events),
     listRows(TABLES.resources),
     listRows(TABLES.volunteerActivity),
   ]);
+
+  volunteers = decodeRows(volunteers);
+  events = decodeRows(events);
+  resources = decodeRows(resources);
+  activities = decodeRows(activities);
+
+  const uid = req.user?.id;
+  if (uid) {
+    volunteers = volunteers.filter(x => !x.coordinates?.ownerId || x.coordinates.ownerId === uid);
+    events = events.filter(x => !x.coordinates?.ownerId || x.coordinates.ownerId === uid);
+    resources = resources.filter(x => !x.coordinates?.ownerId || x.coordinates.ownerId === uid);
+    activities = activities.filter(x => !x.coordinates?.ownerId || x.coordinates.ownerId === uid);
+  }
 
   const metrics = {
     totalVolunteers: volunteers.length,
@@ -63,7 +87,7 @@ export const getOverview = async (_req, res) => {
 
 export const getVolunteerDashboard = async (req, res) => {
   const userId = req.user?.id;
-  const [volunteers, events, tasks, notifications, disasters, activity] = await Promise.all([
+  let [volunteers, events, tasks, notifications, disasters, activity] = await Promise.all([
     listRows(TABLES.volunteers),
     listRows(TABLES.events),
     listRows(TABLES.tasks),
@@ -71,6 +95,9 @@ export const getVolunteerDashboard = async (req, res) => {
     listRows(TABLES.disasters),
     listRows(TABLES.volunteerActivity),
   ]);
+
+  volunteers = decodeRows(volunteers);
+  events = decodeRows(events);
 
   const profile = volunteers.find((v) => v.id === userId) || volunteers[0] || null;
   const joinedEvents = events.filter((event) => (event.assignedVolunteers || []).includes(profile?.id));

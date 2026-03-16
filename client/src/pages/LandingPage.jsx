@@ -7,6 +7,7 @@ import Footer from '../components/landing/Footer';
 import Preloader from '../components/landing/Preloader';
 import AboutSection from '../components/landing/AboutSection';
 import ContactSection from '../components/landing/ContactSection';
+import ChatbotWidget from '../components/chatbot/ChatbotWidget';
 
 const LandingPage = () => {
   return (
@@ -24,6 +25,7 @@ const LandingPage = () => {
         <ContactSection />
         <Footer />
       </div>
+      <ChatbotWidget />
     </div>
   );
 };

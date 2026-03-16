@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { FileUp } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader';
 import AnimatedButton from '../components/ui/AnimatedButton';
 import { StaggerSection } from '../components/ui/StaggerSection';
+import CsvUploader from '../components/common/CsvUploader';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
@@ -18,6 +20,7 @@ const ResourcesPage = () => {
   const [resources, setResources] = useState([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [form, setForm] = useState({
     resourceName: '',
     quantity: 0,
@@ -73,11 +76,34 @@ const ResourcesPage = () => {
       .catch((err) => setError(err.response?.data?.message || 'Unable to delete resource.'));
   };
 
+  const handleBulkUpload = (data) => {
+    setSaving(true);
+    api
+      .post('/resources/bulk', { data })
+      .then(() => {
+        setIsUploadingCsv(false);
+        loadResources();
+      })
+      .catch((err) => setError(err.response?.data?.message || 'Bulk upload failed.'))
+      .finally(() => setSaving(false));
+  };
+
   return (
     <section className="space-y-5 pb-10 md:space-y-6">
       <PageHeader
         title="Resources"
         subtitle="Inventory control with stock health monitoring across all NGO hubs"
+        action={
+          user?.role === 'admin' ? (
+            <button
+              onClick={() => setIsUploadingCsv(true)}
+              className="flex items-center gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--card-elevated)] px-4 py-2 text-sm font-medium transition hover:bg-[var(--surface-hover)]"
+            >
+              <FileUp className="h-4 w-4" />
+              Upload CSV
+            </button>
+          ) : null
+        }
       />
       {error ? <p className="mb-3 text-sm text-rose-300">{error}</p> : null}
 
@@ -193,6 +219,14 @@ const ResourcesPage = () => {
           </tbody>
         </table>
       </StaggerSection>
+
+      {isUploadingCsv && (
+        <CsvUploader
+          title="Upload Resource Inventory"
+          onUpload={handleBulkUpload}
+          onCancel={() => setIsUploadingCsv(false)}
+        />
+      )}
     </section>
   );
 };

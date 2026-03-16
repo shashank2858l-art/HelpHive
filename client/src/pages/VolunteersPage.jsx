@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { MapPin, Sparkles, Users } from 'lucide-react';
+import { MapPin, Sparkles, Users, FileUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SkeletonLoader from '../components/loader/SkeletonLoader';
 import AnimatedButton from '../components/ui/AnimatedButton';
 import PageHeader from '../components/ui/PageHeader';
 import { StaggerItem, StaggerSection } from '../components/ui/StaggerSection';
+import CsvUploader from '../components/common/CsvUploader';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
 import { api } from '../services/api';
@@ -24,6 +25,7 @@ const VolunteersPage = () => {
   const [selectedEventId, setSelectedEventId] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [error, setError] = useState('');
 
   const loadEvents = useCallback(() => {
@@ -115,21 +117,54 @@ const VolunteersPage = () => {
     api.put(`/volunteers/${volunteerId}/approve`).catch(() => {});
   };
 
+  const handleDeleteVolunteer = (volunteerId) => {
+    if (!window.confirm('Are you sure you want to permanently delete this volunteer?')) return;
+    
+    setVolunteers((prev) => prev.filter((v) => v._id !== volunteerId));
+    api.delete(`/volunteers/${volunteerId}`).catch((err) => {
+        setError(err.response?.data?.message || 'Delete failed. Restoring data...');
+        loadData(); // Reload if it fails
+    });
+  };
+
+  const handleBulkUpload = (data) => {
+    setLoading(true);
+    api
+      .post('/volunteers/bulk', { data })
+      .then(() => {
+        setIsUploadingCsv(false);
+        loadData();
+      })
+      .catch((err) => {
+        setError(err.response?.data?.message || 'Bulk upload failed.');
+        setLoading(false);
+      });
+  };
+
   return (
     <section className="space-y-5 pb-10 md:space-y-6">
       <PageHeader
         title="Volunteers"
         subtitle="Search, discover, and coordinate your field volunteer network"
         action={
-          <>
+          <div className="flex items-center gap-2">
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => setIsUploadingCsv(true)}
+                className="flex items-center gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--card-elevated)] px-4 py-2 text-sm font-medium transition hover:bg-[var(--surface-hover)]"
+              >
+                <FileUp className="h-4 w-4" />
+                Upload CSV
+              </button>
+            )}
             <button
               type="button"
               onClick={loadData}
-              className="rounded-xl border border-[var(--border-muted)] bg-[var(--card-elevated)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)]"
+              className="rounded-xl border border-[var(--border-muted)] bg-[var(--card-elevated)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--surface-hover)]"
             >
               Refresh
             </button>
-          </>
+          </div>
         }
       />
 
@@ -260,6 +295,16 @@ const VolunteersPage = () => {
                   Assign Event
                 </button>
               )}
+
+              {user?.role === 'admin' && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteVolunteer(v._id)}
+                  className="rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-1.5 text-rose-200 hover:bg-rose-500/20"
+                >
+                  Delete
+                </button>
+              )}
             </div>
           </motion.article>
           </StaggerItem>
@@ -305,6 +350,14 @@ const VolunteersPage = () => {
           </div>
         </>
       ) : null}
+
+      {isUploadingCsv && (
+        <CsvUploader
+          title="Upload Volunteers"
+          onUpload={handleBulkUpload}
+          onCancel={() => setIsUploadingCsv(false)}
+        />
+      )}
     </section>
   );
 };

@@ -11,7 +11,7 @@ export const recommendVolunteers = async (_req, res) => {
       _id: volunteer.id,
       name: volunteer.name,
       skills: volunteer.skills || [],
-      location: volunteer.location || 'Unknown',
+      location: (volunteer.location || '').split('||')[0] || 'Unknown',
       score: Number(volunteer.impactScore || 0),
     }));
 

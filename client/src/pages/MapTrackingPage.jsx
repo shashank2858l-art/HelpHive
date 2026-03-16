@@ -47,8 +47,8 @@ const MapTrackingPage = () => {
     }));
 
     const centerPoints = resources.map((resource) => ({
-      name: resource.resourceName,
-      label: `Resource | ${resource.location}`,
+      name: resource.resourceName || resource.name || 'Unnamed Resource',
+      label: `Resource | ${resource.location || 'Unknown'}`,
       lat: resource.coordinates?.lat,
       lng: resource.coordinates?.lng,
       type: 'resource',

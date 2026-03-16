@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { CalendarDays, MapPin, Users } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Trash2 } from 'lucide-react';
 import AnimatedButton from '../components/ui/AnimatedButton';
 import PageHeader from '../components/ui/PageHeader';
 import { StaggerItem, StaggerSection } from '../components/ui/StaggerSection';
@@ -96,70 +96,150 @@ const EventsPage = () => {
       .catch((err) => setError(err.response?.data?.message || 'Unable to delete event.'));
   };
 
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target.result;
+      const rows = text.split('\n').filter(row => row.trim());
+      const headers = rows[0].split(',').map(h => h.trim());
+      
+      const data = rows.slice(1).map(row => {
+        const values = row.split(',').map(v => v.trim());
+        const obj = {};
+        headers.forEach((header, i) => {
+          obj[header] = values[i];
+        });
+        return obj;
+      });
+
+      try {
+        const payload = data.map(item => ({
+          title: item.title || item.name || 'Bulk Event',
+          description: item.description || '',
+          location: item.location || '',
+          date: item.date || new Date().toISOString(),
+          volunteersRequired: Number(item.volunteersRequired) || 0,
+          status: item.status || 'planned'
+        }));
+
+        await api.post('/events/bulk', { data: payload });
+        window.location.reload();
+      } catch (err) {
+        setError('Failed to upload CSV. Ensure columns match: title, description, location, date, volunteersRequired');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <section className="space-y-5 pb-10 md:space-y-6">
       <PageHeader
         title="Events"
         subtitle="Create and monitor campaigns with volunteers, locations, and resource allocations"
-        action={user?.role === 'admin' && <AnimatedButton onClick={() => setIsModalOpen(true)}>Create Event</AnimatedButton>}
+        action={
+          <div className="flex gap-2">
+            <input
+              type="file"
+              id="csvUpload"
+              accept=".csv"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => document.getElementById('csvUpload').click()}
+              className="flex items-center gap-2 rounded-xl border border-[var(--border-muted)] px-4 py-2 text-sm hover:bg-white/5 transition-colors"
+            >
+              Upload CSV
+            </button>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="rounded-xl border border-[var(--border-muted)] px-4 py-2 text-sm hover:bg-white/5 transition-colors"
+            >
+              Refresh
+            </button>
+            {user?.role === 'admin' && <AnimatedButton onClick={() => setIsModalOpen(true)}>Create Event</AnimatedButton>}
+          </div>
+        }
       />
 
       {error ? <p className="mb-3 text-sm text-rose-300">{error}</p> : null}
 
-      <StaggerSection className="grid gap-4 md:grid-cols-2">
-        {events.map((event) => (
-          <StaggerItem key={event._id}>
-          <motion.article
-            whileHover={{ y: -4 }}
-            className="tilt-card glass rounded-xl p-5"
+      {error ? <p className="mb-3 text-sm text-rose-300">{error}</p> : null}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {events.length > 0 ? events.map((event, index) => (
+          <article
+            key={event._id || event.id || index}
+            className="rounded-xl border border-white/10 bg-white/5 p-5 shadow-lg backdrop-blur-sm"
           >
-            <h3 className="font-['Outfit'] text-xl font-semibold">{event.title || event.name}</h3>
-            <p className="mt-1 flex items-center gap-1 text-sm text-[var(--text-secondary)]">
-              <CalendarDays className="h-4 w-4" /> {new Date(event.date).toLocaleDateString()}
-            </p>
-            <p className="mt-1 flex items-center gap-1 text-sm text-[var(--text-secondary)]">
-              <MapPin className="h-4 w-4" /> {event.location}
-            </p>
-            <p className="mt-2 flex items-center gap-1 text-sm text-[var(--text-secondary)]">
-              <Users className="h-4 w-4" /> Volunteers assigned: {event.assignedVolunteers?.length || 0}
-            </p>
-            <p className="text-sm text-[var(--text-secondary)]">Volunteers required: {event.volunteersRequired || 0}</p>
-            <p className="text-sm text-[var(--text-secondary)]">Resources used: {event.resourcesRequired?.length || 0}</p>
-            <p className="text-sm text-[var(--text-secondary)]">Status: {event.status || 'planned'}</p>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-700/45">
-              <div
-                className="h-full bg-gradient-to-r from-cyan-500 to-blue-600"
-                style={{ width: `${event.successRate || 80}%` }}
-              />
+            <div className="flex justify-between items-start">
+              <h3 className="font-['Outfit'] text-xl font-semibold text-white">
+                {event.title || event.name || 'Untitled Event'}
+              </h3>
+              <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                (event.status || 'planned') === 'active' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-blue-500/20 text-blue-300'
+              }`}>
+                {event.status || 'planned'}
+              </span>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <p className="flex items-center gap-2 text-sm text-slate-400">
+                <CalendarDays className="h-4 w-4" /> 
+                {event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD'}
+              </p>
+              <p className="flex items-center gap-2 text-sm text-slate-400">
+                <MapPin className="h-4 w-4" /> 
+                {event.location || 'Online / TBD'}
+              </p>
+              <p className="flex items-center gap-2 text-sm text-slate-400">
+                <Users className="h-4 w-4" /> 
+                Volunteers: {event.assignedVolunteers?.length || 0} / {event.volunteersRequired || 0}
+              </p>
             </div>
 
             {user?.role === 'admin' ? (
-              <div className="mt-4 flex items-center justify-end gap-2">
+              <div className="mt-6 pt-4 border-t border-white/5 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => handleDeleteEvent(event._id)}
-                  className="rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-200"
+                  onClick={() => {
+                    if (window.confirm('Delete this event?')) {
+                      handleDeleteEvent(event._id || event.id);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-200 hover:bg-rose-500/20 transition-colors"
                 >
+                  <Trash2 className="h-3.5 w-3.5" />
                   Delete
                 </button>
               </div>
-            ) : null}
-
-            {user?.role === 'volunteer' && (
-              <div className="mt-4">
-                <AnimatedButton 
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 py-1.5" 
-                  onClick={() => handleJoinEvent(event._id)}
+            ) : (
+              <div className="mt-6 pt-4 border-t border-white/5">
+                 <button 
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg py-2 text-sm font-medium transition-colors"
+                  onClick={() => handleJoinEvent(event._id || event.id)}
                 >
                   Join Event
-                </AnimatedButton>
+                </button>
               </div>
             )}
-          </motion.article>
-          </StaggerItem>
-        ))}
-        {!events.length ? <p className="text-sm text-[var(--text-secondary)]">No events available.</p> : null}
-      </StaggerSection>
+          </article>
+        )) : (
+          <div className="col-span-full py-10 text-center rounded-xl border border-dashed border-white/10">
+            <p className="text-slate-400 text-sm">No events found. Click 'Create' or 'Upload CSV' to add some.</p>
+          </div>
+        )}
+      </div>
+
+      {/* DEBUG SECTION - ONLY VISIBLE IF THERE ARE ERRORS */}
+      {events.length === 0 && !error && (
+        <div className="hidden">
+           Events length is 0. User role: {user?.role}
+        </div>
+      )}
 
       <AnimatePresence>
         {isModalOpen && (
